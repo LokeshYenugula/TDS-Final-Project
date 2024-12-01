@@ -77,11 +77,11 @@ WSGI_APPLICATION = 'surveyproject.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'survey',     #name of the database
+        'NAME': 'surveydb',     #name of the database
         'USER': 'postgres',   #username
-        'PASSWORD': '12345',   #password
+        'PASSWORD': 'tabu1008',   #password
         'HOST': 'localhost',  
-        'PORT': '5434',       
+        'PORT': '5432',       
     }
 }
 
