@@ -1,0 +1,400 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container my-5">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Edit Survey: {{ survey.name }}</h2>
+        {% if survey.status == "published" %}
+            <span class="badge bg-success">Published</span>
+        {% elif survey.status == "draft" %}
+            <span class="badge bg-secondary">Draft</span>
+        {% elif survey.status == "closed" %}
+            <span class="badge bg-danger">Closed</span>
+        {% elif survey.status == "republished" %}
+            <span class="badge bg-warning text-dark">Republished</span>
+        {% endif %}
+    </div>
+
+    
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Survey Details</h5>
+                <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editSurveyModal">Edit Survey</button>
+            </div>
+            <p class="card-text mt-3"><strong>Description:</strong> {{ survey.description }}</p>
+            {% if survey.status == 'closed' %}
+                <p class="text-muted">
+                    Closed
+                </p>
+            {% else %}
+                <p class="{% if survey.time_to_close == 'Closed' %}text-muted{% elif survey.time_to_close == 'Closes Today' %}text-danger{% else %}text-warning{% endif %}">
+                    {% if not survey.time_to_close == 'Closed' and not survey.time_to_close == 'Closes Today' %}Closes in: {% endif %}
+                    {{ survey.time_to_close }}
+                </p>
+            {% endif %}
+        </div>
+    </div>
+
+    
+    <div class="mb-4">
+        <h4>Questions</h4>
+        {% if survey.status != "closed" %}
+            <button class="btn btn-outline-secondary mb-3" data-bs-toggle="modal" data-bs-target="#addQuestionModal">Add Question</button>
+        {% endif %}
+        <ul class="list-group" id="questions-list">
+            {% for question in questions %}
+                <li class="list-group-item">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <strong>{{ question.text }}</strong>
+                        {% if survey.status == "draft" %}
+                            <button class="btn btn-sm btn-outline-primary edit-question-btn" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#editQuestionModal"
+                                data-question-id="{{ question.id }}"
+                                data-question-text="{{ question.text }}">
+                                Edit
+                            </button>
+                        {% endif %}
+                    </div>
+                    <ul class="mt-2">
+                        {% for option in question.options.all %}
+                            <li class="text-muted">{{ option.text }}</li>
+                        {% endfor %}
+                    </ul>
+                </li>
+            {% empty %}
+                <li class="list-group-item text-muted">No questions added yet.</li>
+            {% endfor %}
+        </ul>
+       
+    </div>
+
+    {% if survey.status == "closed" %}
+        <div class="alert alert-danger" role="alert">
+            This survey is closed and cannot be modified.
+        </div>
+    {% endif %}
+</div>
+<div class="modal fade" id="editSurveyModal" tabindex="-1" aria-labelledby="editSurveyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editSurveyModalLabel">Edit Survey</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="survey-name" class="form-label">Survey Name</label>
+                        <input type="text" id="survey-name" name="name" class="form-control" value="{{ survey.name }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="survey-description" class="form-label">Description</label>
+                        <textarea id="survey-description" name="description" class="form-control" rows="3" required>{{ survey.description }}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="survey-status" class="form-label">Status(Life Cycle)</label>
+                        <select id="survey-status" name="status" class="form-select">
+                            {% if survey.status == "closed" %}
+                                <option value="closed" {% if survey.status == "closed" %}selected{% endif %}>Closed</option>
+                                <option value="republished">Republish</option>
+                            {% endif %}
+                            {% if survey.status == "republished" %}
+                                <option value="republished" {% if survey.status == "republished" %}selected{% endif %}>Republished</option>
+                                <option value="closed">Close</option>
+                            {% endif %}
+                            {% if survey.status == "published" %}
+                                <option value="published" {% if survey.status == "published" %}selected{% endif %}>Published</option>
+                                <option value="closed">Close</option>
+                            {% endif %}
+                            {% if survey.status == "draft" %}
+                                <option value="draft" {% if survey.status == "draft" %}selected{% endif %}>Draft</option>
+                                <option value="published" {% if survey.status == "published" %}selected{% endif %}>Publish</option>
+                            {% endif %}
+                        </select>
+
+                        <div class="mb-3">
+                            <label for="survey-date-of-close" class="form-label">Date to Close</label>
+                            <input type="date" id="survey-date-of-close" name="date_of_close" class="form-control" value="{{ survey.date_of_close|date:'Y-m-d' }}" min="{{ today|date:'Y-m-d' }}" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addQuestionModal" tabindex="-1" aria-labelledby="addQuestionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="add-question-form">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addQuestionModalLabel">Add Question</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="question-text" class="form-label">Question</label>
+                        <input type="text" id="question-text" class="form-control" placeholder="Enter the question" required>
+                    </div>
+                    <div id="responses-container" class="mb-3">
+                        <label class="form-label">Responses</label>
+                        <div class="input-group mb-2">
+                            <input type="text" class="form-control response-field" placeholder="Enter a response" required>
+                            <button type="button" class="btn btn-outline-danger remove-response">Remove</button>
+                        </div>
+                    </div>
+                    <button type="button" id="add-response" class="btn btn-outline-secondary mb-3">Add Response</button>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Question</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="editQuestionModal" tabindex="-1" aria-labelledby="editQuestionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="edit-question-form">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editQuestionModalLabel">Edit Question</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="edit-question-text" class="form-label">Question</label>
+                        <input type="text" id="edit-question-text" class="form-control" required>
+                    </div>
+                    <div id="edit-responses-container" class="mb-3">
+                        <label class="form-label">Responses</label>
+                        
+                    </div>
+                    <button type="button" id="edit-add-response" class="btn btn-outline-secondary mb-3">Add Response</button>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const responsesContainer = document.getElementById("responses-container");
+        const addResponseButton = document.getElementById("add-response");
+        const addQuestionForm = document.getElementById("add-question-form");
+        const questionsList = document.getElementById("questions-list");
+        const editQuestionForm = document.getElementById("edit-question-form");
+        const editQuestionText = document.getElementById("edit-question-text");
+        const editResponsesContainer = document.getElementById("edit-responses-container");
+        const editAddResponseButton = document.getElementById("edit-add-response");
+        let currentQuestionId = null;
+
+       
+        document.querySelectorAll(".edit-question-btn").forEach(button => {
+            button.addEventListener("click", async (e) => {
+                currentQuestionId = button.getAttribute("data-question-id");
+                const questionText = button.getAttribute("data-question-text");
+
+                
+                editQuestionText.value = questionText;
+
+                
+                try {
+                    const response = await fetch(`/survey/{{ survey.id }}/question/${currentQuestionId}/responses/`);
+                    const data = await response.json();
+
+                    
+                    editResponsesContainer.innerHTML = "";
+
+                    
+                    if (data.success) {
+                        data.responses.forEach(response => {
+                            const inputGroup = document.createElement("div");
+                            inputGroup.classList.add("input-group", "mb-2");
+                            inputGroup.innerHTML = `
+                                <input type="text" class="form-control response-field" value="${response.text}" required>
+                                <button type="button" class="btn btn-outline-danger remove-response">Remove</button>
+                            `;
+                            editResponsesContainer.appendChild(inputGroup);
+                        });
+                    } else {
+                        alert("Failed to load responses.");
+                    }
+                } catch (error) {
+                    console.error("Error loading responses:", error);
+                }
+            });
+        });
+
+        
+        editAddResponseButton.addEventListener("click", () => {
+            const inputGroup = document.createElement("div");
+            inputGroup.classList.add("input-group", "mb-2");
+            inputGroup.innerHTML = `
+                <input type="text" class="form-control response-field" placeholder="Enter a response" required>
+                <button type="button" class="btn btn-outline-danger remove-response">Remove</button>
+            `;
+            editResponsesContainer.appendChild(inputGroup);
+        });
+
+        
+        editResponsesContainer.addEventListener("click", (e) => {
+            if (e.target.classList.contains("remove-response")) {
+                e.target.parentElement.remove();
+            }
+        });
+
+        
+        editQuestionForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const updatedQuestionText = editQuestionText.value.trim();
+            const responseFields = document.querySelectorAll(".response-field");
+            const updatedResponses = Array.from(responseFields)
+                .map(input => input.value.trim())
+                .filter(value => value);
+
+            if (!updatedQuestionText || updatedResponses.length === 0) {
+                alert("Please provide a question and at least one response.");
+                return;
+            }
+
+            
+            try {
+                const response = await fetch(`/survey/{{ survey.id }}/edit-question/${currentQuestionId}/`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": "{{ csrf_token }}",
+                    },
+                    body: JSON.stringify({
+                        question_text: updatedQuestionText,
+                        responses: updatedResponses,
+                    }),
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                   
+                    const questionElement = document.querySelector(
+                        `.edit-question-btn[data-question-id="${currentQuestionId}"]`
+                    ).closest(".list-group-item");
+
+                   
+                    questionElement.querySelector("strong").textContent = updatedQuestionText;
+
+                    
+                    const responseList = questionElement.querySelector("ul");
+                    responseList.innerHTML = ""; 
+                    updatedResponses.forEach(response => {
+                        const listItem = document.createElement("li");
+                        listItem.classList.add("text-muted");
+                        listItem.textContent = response;
+                        responseList.appendChild(listItem);
+                    });
+
+                   
+                    const modal = bootstrap.Modal.getInstance(document.getElementById("editQuestionModal"));
+                    modal.hide();
+                } else {
+                    alert(data.message);
+                }
+            } catch (error) {
+                console.error("Error updating question:", error);
+            }
+        });
+
+        
+        addResponseButton.addEventListener("click", () => {
+            const inputGroup = document.createElement("div");
+            inputGroup.classList.add("input-group", "mb-2");
+            inputGroup.innerHTML = `
+                <input type="text" class="form-control response-field" placeholder="Enter a response" required>
+                <button type="button" class="btn btn-outline-danger remove-response">Remove</button>
+            `;
+            responsesContainer.appendChild(inputGroup);
+        });
+
+        
+        responsesContainer.addEventListener("click", (e) => {
+            if (e.target.classList.contains("remove-response")) {
+                e.target.parentElement.remove();
+            }
+        });
+
+       
+        addQuestionForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+
+            const questionText = document.getElementById("question-text").value.trim();
+            const responseFields = document.querySelectorAll(".response-field");
+            const responses = Array.from(responseFields)
+                .map(input => input.value.trim())
+                .filter(value => value);
+
+            if (!questionText || responses.length === 0) {
+                alert("Please provide a question and at least one response.");
+                return;
+            }
+
+           
+            fetch(`/survey/{{ survey.id }}/add-question/`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": "{{ csrf_token }}",
+                    },
+                    body: JSON.stringify({
+                        question_text: questionText,
+                        responses: responses,
+                    }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        
+                        const newQuestion = document.createElement("li");
+                        newQuestion.classList.add("list-group-item");
+                        newQuestion.innerHTML = `
+                            <div class="d-flex justify-content-between align-items-center">
+                                <strong>${questionText}</strong>
+                                <span class="text-muted small">Responses: ${responses.length}</span>
+                            </div>
+                            <ul class="mt-2">
+                                ${responses.map(response => `<li class="text-muted">${response}</li>`).join("")}
+                            </ul>
+                        `;
+                        questionsList.appendChild(newQuestion);
+
+                        
+                        document.getElementById("question-text").value = "";
+                        responseFields.forEach(field => field.parentElement.remove());
+
+                        
+                        const modal = bootstrap.Modal.getInstance(document.getElementById("addQuestionModal"));
+                        modal.hide();
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(error => console.error("Error:", error));
+        });
+    });
+</script>
+{% endblock %}

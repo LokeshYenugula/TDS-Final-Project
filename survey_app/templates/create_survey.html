@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block title %}Take Survey{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-3">{{ survey.name }}</h2>
+    <p class="text-muted">{{ survey.description }}</p>
+    <form method="POST" class="card shadow p-4">
+        {% csrf_token %}
+        {% for question in survey.questions.all %}
+            <div class="mb-4">
+                <h5>{{ question.text }}</h5>
+                {% for option in question.options.all %}
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="question-{{ question.id }}" id="option-{{ option.id }}" value="{{ option.id }}" required>
+                        <label class="form-check-label" for="option-{{ option.id }}">{{ option.text }}</label>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endfor %}
+        <button type="submit" class="btn btn-success">Submit</button>
+    </form>
+</div>
+{% endblock %}
