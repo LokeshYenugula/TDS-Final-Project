@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}Login - Survey App{% endblock %}
+
+{% block content %}
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-4">
+            <div class="form-container card shadow-lg">
+                <h3 class="text-center mb-4">Login</h3>
+
+                <!-- Display form errors -->
+                {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <ul>
+                            {% for field in form %}
+                                {% for error in field.errors %}
+                                    <li>Incorrect Credentials</li>
+                                {% endfor %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+
+                <!-- Login form -->
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username <i class="bi bi-person-circle"></i></label>
+                        <input type="text" class="form-control" id="username" name="username" required placeholder="Enter your username">
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password <i class="bi bi-lock"></i></label>
+                        <input type="password" class="form-control" id="password" name="password" required placeholder="Enter your password">
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Login</button>
+                </form>
+
+                <div class="text-center mt-3">
+                    <p>Don't have an account? <a href="{% url 'register' %}">Register</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
