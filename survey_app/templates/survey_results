@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block title %}Survey Results{% endblock %}
+{% load math_filters %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-3">{{ survey.name }} - Results</h2>
+    <p class="text-muted">{{ survey.description }}</p>
+
+    <div class="card shadow-sm p-4">
+        <h4 class="mb-3">Survey Responses</h4>
+
+        <!-- Display total number of users who participated -->
+        <p><strong>Total Users Who Took Part: </strong>{{ total_users }}</p>
+
+        <hr>
+
+        {% for question, data in results.items %}
+            <div class="mb-4">
+                <h5 class="mb-3">{{ question.text }}</h5>
+                <ul class="list-group">
+                    {% for option, count in data.counts.items %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>{{ option }}</span>
+                            <span>
+                                <strong>{{ count }}</strong> responses 
+                                (<em>{{ count|divide:total_users|multiply:100|floatformat:2 }}%</em>)
+                            </span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endfor %}
+    </div>
+
+    <a href="{% url 'dashboard' %}" class="btn btn-secondary mt-3">Back to Dashboard</a>
+</div>
+{% endblock %}

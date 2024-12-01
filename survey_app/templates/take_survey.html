@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+
+{% block title %}Take Survey{% endblock %}
+{% load custom_filters %}
+{% block content %}
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>{{ survey.name }}</h2>
+        <span class="badge {% if survey.status == 'published' %}bg-success{% elif survey.status == 'closed' %}bg-danger{% elif survey.status == 'republished' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+            {{ survey.status|title }}
+        </span>
+    </div>
+
+    <p class="text-muted">{{ survey.description }}</p>
+
+
+    {% if survey.status == 'closed' %}
+    <!-- <h3 class="text-warning">Survey Results</h3>
+    <div class="card shadow p-4">
+        {% for stat in question_stats %}
+            <div class="mb-4">
+                <h5>{{ stat.question.text }}</h5>
+                
+                <ul>
+                    {% for option_stat in stat.options %}
+                        <li>
+                            <strong>{{ option_stat.option.text }}</strong>
+                            
+                            {% if user_responses|get_item:stat.question.id == option_stat.option.id %}
+                                <span class="badge bg-success ms-2">Your Selection</span>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endfor %}
+    </div> -->
+    <h3 class="text-danger">Survey Closed!</h3>
+    {% endif %}
+
+    {% if submitted and survey.status == 'published' %}
+    <h3 class="text-danger"> Survey Completed</h3>
+    <div class="card shadow p-4">
+        {% for stat in question_stats %}
+            <div class="mb-4">
+                <h5>{{ stat.question.text }}</h5>
+                
+                <ul>
+                    {% for option_stat in stat.options %}
+                        <li>
+                            <strong>{{ option_stat.option.text }}</strong>
+                            
+                            {% if user_responses|get_item:stat.question.id == option_stat.option.id %}
+                                <span class="badge bg-success ms-2">Your Selection</span>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if not submitted and survey.status == 'published' %}
+        <form method="POST" class="card shadow p-4">
+            {% csrf_token %}
+            
+            {% for question in survey.questions.all %}
+                <div class="mb-4">
+                    <h5>{{ question.text }}</h5>
+                    
+                    {% for option in question.options.all %}
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="question-{{ question.id }}" id="option-{{ option.id }}" value="{{ option.id }}"
+                                {% if submitted %}
+                                    {% if user_responses|get_item:question.id == option.id %}
+                                        checked
+                                    {% endif %}
+                                {% endif %} 
+                                {% if submitted %}
+                                    disabled
+                                {% endif %}
+                            required>
+                            <label class="form-check-label" for="option-{{ option.id }}">{{ option.text }}</label>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+            
+            <button type="submit" class="btn btn-success" {% if submitted %}disabled{% endif %}>Complete Survey</button>
+        </form>
+    {% endif %}
+    
+
+    {% if survey.status == 'republished' %}
+        {% if submitted %}
+        <h3 class="text-warning">Survey Completed - Results | Wisdom of The Crowd</h3>
+        <div class="card shadow p-4">
+            {% for stat in question_stats %}
+                <div class="mb-4">
+                    <h5>{{ stat.question.text }}</h5>
+                    
+                    <ul>
+                        {% for option_stat in stat.options %}
+                            <li>
+                                <strong>{{ option_stat.option.text }}</strong>
+                                - <span>{{ option_stat.count }}</span> response{% if option_stat.count != 1 %}s{% endif %}
+                                ({% if option_stat.percentage %}{{ option_stat.percentage|floatformat:2 }}{% else %}0{% endif %}%)
+                                
+                                {% if user_responses|get_item:stat.question.id == option_stat.option.id %}
+                                    <span class="badge bg-success ms-2">Your Selection</span>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endfor %}
+        </div>
+        <h3 class="text-warning">Survey is republished, take it again</h3>
+        {% endif %}
+        {% if not submitted %}
+            <h3 class="text-warning">Take Survey</h3>
+        {% endif %}
+        <form method="POST" class="card shadow p-4">
+            {% csrf_token %}
+            
+            {% for question in survey.questions.all %}
+                <div class="mb-4">
+                    <h5>{{ question.text }}</h5>
+                    
+                    {% for option in question.options.all %}
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="question-{{ question.id }}" id="option-{{ option.id }}" value="{{ option.id }}"
+                                {% if submitted %}
+                                    {% if user_responses|get_item:question.id == option.id %}
+                                        checked
+                                    {% endif %}
+                                {% endif %} 
+                            required>
+                            <label class="form-check-label" for="option-{{ option.id }}">{{ option.text }}</label>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+            
+            <button type="submit" class="btn btn-success" >Complete Survey {% if submitted %} | Resubmit {% endif %}</button>
+        </form>
+    {% endif %}
+
+</div>
+{% endblock %}

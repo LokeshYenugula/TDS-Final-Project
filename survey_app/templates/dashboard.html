@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Survey App{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Dashboard</h1>
+        {% if request.user.is_staff %}
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createSurveyModal">
+                <i class="bi bi-plus-circle"></i> Create Survey
+            </button>
+        {% endif %}
+    </div>
+
+    <h3 class="mb-4">Available Surveys</h3>
+    <div class="row">
+        {% if surveys %}
+            {% for survey in surveys %}
+                {% if request.user.is_staff %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-body d-flex flex-column">
+                            
+                                <h5 class="card-title text-primary">{{ survey.name }}</h5>
+                                <p class="card-text text-muted">{{ survey.description|truncatechars:100 }}</p>
+                                
+                                
+                                <p class="text-muted mb-3">
+                                    <span class="badge {% if survey.status == 'closed' %}bg-secondary{% elif survey.status == 'published' %}bg-success{% else %}bg-warning{% endif %}">
+                                        {{ survey.status|capfirst }}
+                                    </span>
+                                </p>
+                                {% if survey.status == 'closed' %}
+                                    <p class="text-muted">
+                                        Closed
+                                    </p>
+                                {% else %}
+                                    <p class="{% if survey.time_to_close == 'Closed' %}text-muted{% elif survey.time_to_close == 'Closes Today' %}text-danger{% else %}text-warning{% endif %}">
+                                        {% if not survey.time_to_close == 'Closed' and not survey.time_to_close == 'Closes Today' %}Closes in: {% endif %}
+                                        {{ survey.time_to_close }}
+                                    </p>
+                                {% endif %}
+                                
+                                <div class="mt-auto">
+                                        <a href="{% url 'survey_results' survey.id %}" class="btn btn-outline-success btn-sm me-2">View Results</a>
+                                        <a href="{% url 'edit_survey' survey.id %}" class="btn btn-outline-secondary btn-sm">Edit Survey</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    {% if survey.status == 'published' %}
+                        <div class="col-md-4 mb-4">
+                            <div class="card shadow-sm h-100">
+                                <div class="card-body d-flex flex-column">
+                                
+                                    <h5 class="card-title text-primary">{{ survey.name }} - {{ survey.status }}</h5>
+                                    <p class="card-text text-muted">{{ survey.description|truncatechars:100 }}</p>
+                                    
+                                    
+                                    <p class="text-muted mb-3">
+                                        <span class="badge {% if survey.status == 'closed' %}bg-secondary{% elif survey.status == 'published' %}bg-success{% else %}bg-warning{% endif %}">
+                                            {{ survey.status|capfirst }}
+                                        </span>
+                                    </p>
+                                    
+                                    <p class="{% if survey.time_to_close == 'Closed' %}text-muted{% elif survey.time_to_close == 'Closes Today' %}text-danger{% else %}text-warning{% endif %}">
+                                        {% if not survey.time_to_close == 'Closed' and not survey.time_to_close == 'Closes Today' %}Closes in: {% endif %}
+                                        {{ survey.time_to_close }}
+                                    </p>
+                                    
+                                    <div class="mt-auto">
+                                        {% if request.user.is_staff %}
+                                        
+                                            <a href="{% url 'survey_results' survey.id %}" class="btn btn-outline-success btn-sm me-2">View Results</a>
+                                            <a href="{% url 'edit_survey' survey.id %}" class="btn btn-outline-secondary btn-sm">Edit Survey</a>
+                                        {% else %}
+                                            
+                                            {% if survey.status == 'closed' %}
+                                                <a href="{% url 'take_survey' survey.id %}" class="btn btn-outline-secondary btn-sm">View Survey</a>
+                                            {% elif survey.status == 'published' or survey.status == 'republished' %}
+                                                {% if survey.completed %}
+                                                    <a href="{% url 'take_survey' survey.id %}" class="btn btn-success btn-sm">View Survey</a>
+                                                {% else %}
+                                                    <a href="{% url 'take_survey' survey.id %}" class="btn btn-primary btn-sm">Take Survey</a>
+                                                {% endif %}
+                                            {% endif %}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        {% if not survey.status == 'closed' %}
+                            <div class="col-md-4 mb-4">
+                                <div class="card shadow-sm h-100">
+                                    <div class="card-body d-flex flex-column">
+                                    
+                                        <h5 class="card-title text-primary">{{ survey.name }}</h5>
+                                        <p class="card-text text-muted">{{ survey.description|truncatechars:100 }}</p>
+                                        
+                                        
+                                        <p class="text-muted mb-3">
+                                            <span class="badge {% if survey.status == 'closed' %}bg-secondary{% elif survey.status == 'published' %}bg-success{% else %}bg-warning{% endif %}">
+                                                {{ survey.status|capfirst }}
+                                            </span>
+                                        </p>
+                                        
+                                        <p class="{% if survey.time_to_close == 'Closed' %}text-muted{% elif survey.time_to_close == 'Closes Today' %}text-danger{% else %}text-warning{% endif %}">
+                                            {% if not survey.time_to_close == 'Closed' and not survey.time_to_close == 'Closes Today' %}Closes in: {% endif %}
+                                            {{ survey.time_to_close }}
+                                        </p>
+                                        {% if survey.completed %}
+                                        <div class="mt-auto">
+                                            <a href="{% url 'take_survey' survey.id %}" class="btn btn-warning btn-sm">Retake Survey</a>
+                                        </div>
+                                        {% else %}
+                                        <div class="mt-auto">
+                                            <a href="{% url 'take_survey' survey.id %}" class="btn btn-primary btn-sm">Take Survey</a>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <p class="text-muted text-center">No surveys available at the moment.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+
+<div class="modal fade" id="createSurveyModal" tabindex="-1" aria-labelledby="createSurveyModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{% url 'create_survey' %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createSurveyModalLabel">Create a New Survey</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Survey Name</label>
+                        <input type="text" class="form-control" id="name" name="name" required placeholder="Enter survey name">
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="3" required placeholder="Enter survey description"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="date_of_close" class="form-label">Date to Close</label>
+                        <input type="date" class="form-control" id="date_of_close" name="date_of_close" placeholder="Select closing date" min="{{ today|date:'Y-m-d' }}" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Survey</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
