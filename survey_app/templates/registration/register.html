@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Register - Survey App{% endblock %}
+
+{% block content %}
+<style>
+    .form-container {
+            margin-top: 10px;
+        }
+</style>
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-4">
+            <div class="form-container card shadow-lg">
+                <h3 class="text-center mb-4">Register</h3>
+
+                <!-- Display form errors -->
+                {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <ul>
+                            {% for field in form %}
+                                {% for error in field.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+
+                <!-- Registration form -->
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username <i class="bi bi-person-circle"></i></label>
+                        <input type="text" class="form-control" id="username" name="username" required placeholder="Enter your username">
+                    </div>
+                    <div class="mb-3">
+                        <label for="first_name" class="form-label">First Name <i class="bi bi-person"></i></label>
+                        <input type="text" class="form-control" id="first_name" name="first_name" required placeholder="Enter your first name">
+                    </div>
+                    <div class="mb-3">
+                        <label for="last_name" class="form-label">Last Name <i class="bi bi-person"></i></label>
+                        <input type="text" class="form-control" id="last_name" name="last_name" required placeholder="Enter your last name">
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email <i class="bi bi-envelope"></i></label>
+                        <input type="email" class="form-control" id="email" name="email" required placeholder="Enter your email">
+                    </div>
+                    <div class="mb-3">
+                        <label for="role" class="form-label">Role <i class="bi bi-person-badge"></i></label>
+                        <select class="form-select" id="role" name="role" required>
+                            <option value="taker">Survey Taker</option>
+                            <option value="creator">Survey Creator</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password <i class="bi bi-lock"></i></label>
+                        <input type="password" class="form-control" id="password" name="password1" required placeholder="Enter your password">
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Confirm Password <i class="bi bi-lock"></i></label>
+                        <input type="password" class="form-control" id="password" name="password2" required placeholder="Enter your password">
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Register</button>
+                </form>
+
+                <div class="text-center mt-3">
+                    <p>Already have an account? <a href="{% url 'login' %}">Login</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
